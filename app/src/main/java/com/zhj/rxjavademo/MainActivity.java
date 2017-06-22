@@ -10,9 +10,9 @@ import java.io.IOException;
 import io.reactivex.Observable;
 import io.reactivex.ObservableEmitter;
 import io.reactivex.ObservableOnSubscribe;
-import io.reactivex.Scheduler;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
@@ -29,7 +29,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         final TextView tv_return = (TextView) findViewById(R.id.tv_return);
-        Observable<Integer> observable = Observable.create(new ObservableOnSubscribe<String>() {
+
+        Observable.create(new ObservableOnSubscribe<String>() {
             @Override
             public void subscribe(ObservableEmitter<String> emitter) throws Exception {
                 Log.d(TAG, "Observer thread is :" + Thread.currentThread().getName());
@@ -40,20 +41,14 @@ public class MainActivity extends AppCompatActivity {
             public Integer apply(@NonNull String response) throws Exception {
                 return response.length();
             }
-        });
-
-        Consumer<Integer> consumer = new Consumer<Integer>() {
-            @Override
-            public void accept(Integer integer) throws Exception {
-                Log.d(TAG, "Observer thread is :" + Thread.currentThread().getName());
-                tv_return.setText("字数："+integer);
-            }
-        };
-
-        observable.subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(consumer);
-
+        }).subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread()).subscribe(new Consumer<Integer>() {
+                    @Override
+                    public void accept(@NonNull Integer integer) throws Exception {
+                        Log.d(TAG, "Observer thread is :" + Thread.currentThread().getName());
+                        tv_return.setText("字数：" + integer);
+                    }
+                });
     }
 
     private String getResponse() {
